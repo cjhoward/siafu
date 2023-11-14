@@ -1,8 +1,10 @@
 # Siafu
 
+[![build](https://github.com/cjhoward/siafu/actions/workflows/build.yml/badge.svg)](https://github.com/cjhoward/siafu/actions/workflows/build.yml)
+
 ## Overview
 
-Siafu is a tiny utility program for extracting isosurfaces from volumetric data. The program loads volumes from sequences of uncompressed TIFF files, and outputs models in `.ply`, `.obj`, or `.stl` formats. Siafu is written in C++23 and has no external dependencies.
+Siafu is a tiny utility program for extracting isosurfaces from volumetric data. The program loads volumes from sequences of uncompressed TIFF files, and outputs models in `.ply`, `.obj`, or `.stl` formats. Siafu is written in C++23 with zero dependencies.
 
 ## Usage
 
@@ -10,16 +12,17 @@ Siafu is a tiny utility program for extracting isosurfaces from volumetric data.
 siafu <volume_path> <isolevel> <output_file>
 ```
 
-- **volume_path**: Directory containing a sequence of uncompressed TIFF files.
+- `volume_path`: Directory containing a sequence of uncompressed TIFF files.
 
-- **isolevel**: Threshold value for isosurface extraction.
+- `isolevel`: Threshold value for isosurface extraction.
 
-- **output_file**: Name of the output file. If the file extension is not recognized, the `.ply` format will be used.
+- `output_file`: Name of the output file. If the file extension is not recognized, the `.ply` format will be used.
 
 ### Example Usage
 
+The following command loads a volume from the `data` directory, extracts an isosurface at isolevel `500`, and saves the isosurface as `output.obj`:
+
 ```bash
-# Load volume from `data` directory, extract isosurface at isolevel `500`, and save as `output.obj`
 siafu ./data 500 output.obj
 ```
 
