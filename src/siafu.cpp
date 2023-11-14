@@ -36,13 +36,13 @@ int main(int argc, char* argv[])
 		return 1;
 	}
 	
-    char* endptr;
-    f32 isolevel = std::strtof(argv[2], &endptr);
-    if (*endptr != '\0')
+	char* endptr;
+	f32 isolevel = std::strtof(argv[2], &endptr);
+	if (*endptr != '\0')
 	{
-        usage();
-        return 1;
-    }
+		usage();
+		return 1;
+	}
 	
 	// Load volume
 	u32 volume_w, volume_h, volume_d, bits_per_voxel;
