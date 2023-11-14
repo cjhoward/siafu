@@ -1,0 +1,8 @@
+build
+bin
+data
+*.obj
+*.ply
+*.stl
+*.tif
+*.tiff
