@@ -21,13 +21,13 @@
  */
 
 #include "siafu.hpp"
-#include <print>
 #include <bit>
+#include <print>
 
 void write_ply(std::ostream& file, std::span<const vertex> vertices, std::span<const triangle> triangles)
 {
 	// Write header
-	std::print
+	std::println
 	(
 		file,
 		"ply\n"
@@ -41,7 +41,7 @@ void write_ply(std::ostream& file, std::span<const vertex> vertices, std::span<c
 		"property float nz\n"
 		"element face {}\n"
 		"property list uchar uint32 vertex_indices\n"
-		"end_header\n",
+		"end_header",
 		std::endian::native == std::endian::big ? "big" : "little",
 		vertices.size(),
 		triangles.size()

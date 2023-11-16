@@ -22,17 +22,22 @@
 
 #include "siafu.hpp"
 #include <cmath>
+#include <memory>
+#include <print>
 
 namespace
 {
 	/// Packed X-, Y-, and Z-offsets to the cube vertices (`0bzzzzzzzzyyyyyyyyxxxxxxxx`).
 	inline constexpr u32 cube_offsets = 0xf0cc66;
 	
-	/// Packed indices of the first vertex of the cube edges (`0b`...`222211110000`).
-	inline constexpr u64 edge_vertices_a = 0x321076543210;
+	/// Packed indices of the first vertex of each cube edge (0, 1, 3, 0, 4, 5, 7, 4, 0, 1, 2, 3).
+	inline constexpr u64 edge_vertices_a = 0x321047540310;
 	
-	/// Packed indices of the second vertex of the cube edges (`0b`...`222211110000`).
-	inline constexpr u64 edge_vertices_b = 0x765447650321;
+	/// Packed indices of the second vertex of each cube edge (1, 2, 2, 3, 5, 6, 6, 7, 4, 5, 6, 7).
+	inline constexpr u64 edge_vertices_b = 0x765476653221;
+	
+	/// Packed directions of each each cube edge (0, 1, 0, 1, 0, 1, 0, 1, 2, 2, 2, 2).
+	inline constexpr u32 edge_directions = 0xaa4444;
 	
 	/// Set of edges intersected by an isosurface for each cube configuration.
 	static const u16 edge_table[256] =
@@ -331,43 +336,6 @@ namespace
 		0xfffffffffffff830,
 		0xffffffffffffffff
 	};
-	
-	/// Maps edge keys to vertex indices.
-	using edge_vertex_map = std::unordered_map<u64, u32>;
-	
-	/**
-	 * Builds an edge key for a pair of vertices.
-	 *
-	 * @param a Index of the first vertex.
-	 * @param b Index of the second vertex.
-	 *
-	 * @return Key for edge (a, b).
-	 */
-	[[nodiscard]] inline constexpr u64 build_edge_key(u32 a, u32 b) noexcept
-	{
-		return (static_cast<u64>(b) << 32) | a;
-	}
-
-	/**
-	 * Finds a vertex given an edge key.
-	 * 
-	 * @param map Edge-vertex map.
-	 * @param key Edge key.
-	 * 
-	 * @return Iterator at the vertex, or `map.end()` if not found.
-	 */
-	[[nodiscard]] auto find_vertex(const edge_vertex_map& map, u64 key)
-	{
-		// Lookup vertex for edge (a, b)
-		auto it = map.find(key);
-		if (it != map.end())
-		{
-			return it;
-		}
-		
-		// Lookup vertex for symmetric edge (b, a)
-		return map.find((key << 32) | (key >> 32));
-	}
 }
 
 void polygonize
@@ -382,14 +350,13 @@ void polygonize
 )
 {
 	const u32vec3 max{std::max(width, 1u) - 1, std::max(height, 1u) - 1, std::max(depth, 1u) - 1};
+	const u32 z_stride = width * height;
 	
 	f32vec3 scale;
 	scale.x = 2.0f / std::max(max.x, std::max(max.y, max.z));
 	scale.y = scale.x;
 	scale.z = scale.x;
 	f32vec3 translation = {-1.0f, -1.0f, -1.0f};
-	
-	edge_vertex_map vertex_map;
 	
 	// Index offset for cube vertices
 	const u32 offsets[8] =
@@ -398,23 +365,29 @@ void polygonize
 		1,
 		width + 1,
 		width,
-		width * height,
-		width * height + 1,
+		z_stride,
+		z_stride + 1,
 		width * (height + 1) + 1,
 		width * (height + 1),
 	};
 	
-	// Allocate buffer to hold 4 Z-slices of voxels
-	const auto voxel_buffer_size = width * height * 4;
-	std::vector<f32> voxel_buffer(voxel_buffer_size);
+	// Allocate a cache to hold the indices of two Z-slices of vertices
+	const u32 vertex_cache_capacity = z_stride * 2;
+	const u32 vertex_cache_size = vertex_cache_capacity * 3;
+	auto vertex_cache = std::make_unique<u32[]>(vertex_cache_size);
+	std::memset(vertex_cache.get(), 0xff, vertex_cache_size * sizeof(u32));
 	
-	// Gets a voxel from the voxel buffer, given X-, Y-, and Z-coordinates.
+	// Allocate a cache to hold 4 Z-slices of voxels
+	const auto voxel_cache_size = z_stride * 4;
+	auto voxel_cache = std::make_unique<f32[]>(voxel_cache_size);
+	
+	// Fetches a voxel from the voxel cache, given X-, Y-, and Z-coordinates.
 	auto get_voxel = [&](u32 x, u32 y, u32 z) -> f32
 	{
-		return voxel_buffer[x + width * (y + height * (z % 4))];
+		return voxel_cache[x + width * (y + height * (z % 4))];
 	};
 	
-	// Calculates a gradient from the voxel buffer, given X-, Y-, and Z-coordinates.
+	// Calculates a gradient from the voxel cache, given X-, Y-, and Z-coordinates.
 	auto get_gradient = [&](u32 x, u32 y, u32 z) -> f32vec3
 	{
 		return
@@ -425,10 +398,10 @@ void polygonize
 		};
 	};
 	
-	// Samples a Z-slice, storing values in the voxel buffer.
-	auto load_z_slice = [&](u32 z)
+	// Caches voxels in the given Z-slice.
+	auto cache_z_slice = [&](u32 z)
 	{
-		f32* s = voxel_buffer.data() + (z % 4) * width * height;
+		f32* s = voxel_cache.get() + (z % 4) * z_stride;
 		for (u32 y = 0; y < height; ++y)
 		{
 			for (u32 x = 0; x < width; ++x)
@@ -438,17 +411,20 @@ void polygonize
 		}
 	};
 	
-	// Sample the first two Z-slices
-	load_z_slice(0);
-	load_z_slice(1);
+	// Cache voxels in the first two Z-slices
+	cache_z_slice(0);
+	cache_z_slice(1);
+	
+	// Init minimum Z-coordinate of cached vertices
+	f32 min_cached_vertex_z = -std::numeric_limits<f32>::infinity();
 	
 	// Loop through the grid
 	for (u32 z = 0; z < max.z; ++z)
 	{
-		// Sample Z-slice at `z + 2`
+		// Cache voxels in Z-slice `z + 2`
 		if (z + 2 < depth)
 		{
-			load_z_slice(z + 2);
+			cache_z_slice(z + 2);
 		}
 		
 		// Calculate Z-coordinates of the cube vertices
@@ -477,7 +453,7 @@ void polygonize
 				u32 cube_config = 0;
 				for (u32 i = 0; i < 8; ++i)
 				{
-					const auto value = voxel_buffer[(base_vertex_index + offsets[i]) % voxel_buffer_size];
+					const auto value = voxel_cache[(base_vertex_index + offsets[i]) % voxel_cache_size];
 					cube_config |= (value < isolevel) << i;
 				}
 				
@@ -499,23 +475,25 @@ void polygonize
 					}
 					
 					// Determine indices of cube vertices that form the edge
-					const auto v1 = static_cast<u32>(edge_vertices_a >> (i << 2)) & 7;
-					const auto v2 = static_cast<u32>(edge_vertices_b >> (i << 2)) & 7;
-					
-					// Build edge key from edge vertex indices
+					const u32 v1 = (edge_vertices_a >> (i << 2)) & 0b111;
+					const u32 v2 = (edge_vertices_b >> (i << 2)) & 0b111;
 					const auto v1_index = base_vertex_index + offsets[v1];
 					const auto v2_index = base_vertex_index + offsets[v2];
-					const auto edge_key = build_edge_key(v1_index, v2_index);
 					
-					// Lookup vertex from edge key
-					if (auto it = find_vertex(vertex_map, edge_key); it != vertex_map.end())
+					// Fetch cached edge vertex with edge key
+					const auto edge_key = (v1_index % vertex_cache_capacity) * 3 + ((edge_directions >> (i << 1)) & 0b11);
+					auto& cached_vertex = vertex_cache[edge_key];
+					
+					// Reuse cached edge vertex if not invalid or expired
+					if (cached_vertex != ~u32{0} && vertices[cached_vertex].p.z >= min_cached_vertex_z)
 					{
-						vertex_indices[i] = it->second;
+						vertex_indices[i] = cached_vertex;
 						continue;
 					}
 					
-					const auto voxel1 = voxel_buffer[v1_index % voxel_buffer_size];
-					const auto voxel2 = voxel_buffer[v2_index % voxel_buffer_size];
+					// Valid cached edge vertex not found, cache a new edge vertex
+					cached_vertex = static_cast<u32>(vertices.size());
+					vertex_indices[i] = cached_vertex;
 					
 					// Calculate X-coordinates of the cube vertices
 					cube_vertices[v1].x = x + ((cube_offsets >> v1) & 1);
@@ -523,63 +501,30 @@ void polygonize
 					transformed_cube_vertices[v1].x = static_cast<f32>(cube_vertices[v1].x) * scale.x + translation.x;
 					transformed_cube_vertices[v2].x = static_cast<f32>(cube_vertices[v2].x) * scale.x + translation.x;
 					
-					
-					
+					// Get transformed edge vertex positions
 					const auto& p1 = transformed_cube_vertices[v1];
 					const auto& p2 = transformed_cube_vertices[v2];
-					vertex v;
-					f32vec3 g;
-					f32 t;
-					if (std::abs(isolevel - voxel2) < 1e-6)
-					{
-						const auto v2_key = build_edge_key(v2_index, v2_index);
-						if (auto it = find_vertex(vertex_map, v2_key); it != vertex_map.end())
-						{
-							vertex_indices[i] = it->second;
-							continue;
-						}
-						vertex_map.emplace(v2_key, static_cast<u32>(vertices.size()));
-						
-						t = 1.0f;
-						v.p = p2;
-						g = get_gradient(cube_vertices[v1].x, cube_vertices[v1].y, cube_vertices[v1].z);
-					}
-					else if (std::abs(isolevel - voxel1) < 1e-6)
-					{
-						const auto v1_key = build_edge_key(v1_index, v1_index);
-						if (auto it = find_vertex(vertex_map, v1_key); it != vertex_map.end())
-						{
-							vertex_indices[i] = it->second;
-							continue;
-						}
-						vertex_map.emplace(v1_key, static_cast<u32>(vertices.size()));
-						
-						t = 0.0f;
-						v.p = p1;
-						g = get_gradient(cube_vertices[v2].x, cube_vertices[v2].y, cube_vertices[v2].z);
-					}
-					else
-					{
-						// Interpolate between edge vertex positions
-						t = std::abs(voxel1 - voxel2) < 1e-6 ? 0.5f : (isolevel - voxel1) / (voxel2 - voxel1);
-						v.p = {(p2.x - p1.x) * t + p1.x, (p2.y - p1.y) * t + p1.y, (p2.z - p1.z) * t + p1.z};
-						
-						// Interpolate between isofield gradients at edge vertex positions
-						const auto g1 = get_gradient(cube_vertices[v1].x, cube_vertices[v1].y, cube_vertices[v1].z);
-						const auto g2 = get_gradient(cube_vertices[v2].x, cube_vertices[v2].y, cube_vertices[v2].z);
-						g = {(g2.x - g1.x) * t + g1.x, (g2.y - g1.y) * t + g1.y, (g2.z - g1.z) * t + g1.z};
-					}
 					
-					// Calculate vertex normal from normalized gradient
+					// Fetch voxel values from voxel cache
+					const auto voxel1 = voxel_cache[v1_index % voxel_cache_size];
+					const auto voxel2 = voxel_cache[v2_index % voxel_cache_size];
+					
+					// Calculate interpolation factor between edge endpoints
+					const f32 t = std::abs(voxel1 - voxel2) < 1e-6 ? 0.5f : (isolevel - voxel1) / (voxel2 - voxel1);
+					
+					// Construct new vertex between edge endpoints
+					vertex v;
+					v.p = {(p2.x - p1.x) * t + p1.x, (p2.y - p1.y) * t + p1.y, (p2.z - p1.z) * t + p1.z};
+					
+					// Interpolate between isofield gradients at edge endpoints
+					const auto g1 = get_gradient(cube_vertices[v1].x, cube_vertices[v1].y, cube_vertices[v1].z);
+					const auto g2 = get_gradient(cube_vertices[v2].x, cube_vertices[v2].y, cube_vertices[v2].z);
+					const f32vec3 g = {(g2.x - g1.x) * t + g1.x, (g2.y - g1.y) * t + g1.y, (g2.z - g1.z) * t + g1.z};
+					
+					// Calculate vertex normal from normalized interpolated gradient
 					const f32 sqr_gl = g.x * g.x + g.y * g.y + g.z * g.z;
 					const f32 inv_gl = (sqr_gl > 1e-6f) ? 1.0f / std::sqrt(sqr_gl) : 0.0f;
 					v.n = {g.x * inv_gl, g.y * inv_gl, g.z * inv_gl};
-					
-					// Store vertex index for triangle generation
-					vertex_indices[i] = static_cast<u32>(vertices.size());
-					
-					// Map vertex index to edge key
-					vertex_map.emplace(edge_key, vertex_indices[i]);
 					
 					// Add vertex to isosurface vertex list
 					vertices.emplace_back(std::move(v));
@@ -602,5 +547,8 @@ void polygonize
 				}
 			}
 		}
+		
+		// Update minimum Z-coordinate of cached vertices
+		min_cached_vertex_z = transformed_cube_vertices[7].z;
 	}
 }

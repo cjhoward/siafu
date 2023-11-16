@@ -38,13 +38,13 @@ siafu ./data 500 output.obj
 2. Configure the project with CMake:
 
    ```bash
-   cmake -B build
+   cmake -B build -DCMAKE_BUILD_TYPE=Release
    ```
 
 3. Build the project:
 
    ```bash
-   cmake --build build
+   cmake --build build --config Release
    ```
 
 The generated `siafu` executable will be located in the `build/bin` directory.

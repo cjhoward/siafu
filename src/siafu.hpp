@@ -122,7 +122,7 @@ void polygonize
  *
  * @return Voxel data.
  */
-[[nodiscard]] std::vector<std::byte> load_volume
+[[nodiscard]] std::unique_ptr<std::byte[]> load_volume
 (
 	const fs::path& path,
 	u32& width,

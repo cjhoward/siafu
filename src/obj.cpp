@@ -27,14 +27,14 @@ void write_obj(std::ostream& file, std::span<const vertex> vertices, std::span<c
 {
 	for (const auto& v: vertices)
 	{
-		std::print(file, "v {} {} {}\n", v.p.x, v.p.y, v.p.z);
+		std::println(file, "v {} {} {}", v.p.x, v.p.y, v.p.z);
 	}
 	for (const auto& v: vertices)
 	{
-		std::print(file, "vn {} {} {}\n", v.n.x, v.n.y, v.n.z);
+		std::println(file, "vn {} {} {}", v.n.x, v.n.y, v.n.z);
 	}
 	for (const auto& t: triangles)
 	{
-		std::print(file, "f {0}//{0} {1}//{1} {2}//{2}\n", t.a + 1, t.b + 1, t.c + 1);
+		std::println(file, "f {0}//{0} {1}//{1} {2}//{2}", t.a + 1, t.b + 1, t.c + 1);
 	}
 }

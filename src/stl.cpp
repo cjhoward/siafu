@@ -38,7 +38,7 @@ namespace stl
 void write_stl(std::ostream& file, std::span<const vertex> vertices, std::span<const triangle> triangles)
 {
 	// Write header
-	char header[80] = {};
+	const char header[80] = {};
 	file.write(header, sizeof(header));
 	
 	// Write triangle count

@@ -46,7 +46,7 @@ int main(int argc, char* argv[])
 	
 	// Load volume
 	u32 volume_w, volume_h, volume_d, bits_per_voxel;
-	std::vector<std::byte> voxels;
+	std::unique_ptr<std::byte[]> voxels;
 	try
 	{
 		voxels = load_volume(argv[1], volume_w, volume_h, volume_d, bits_per_voxel);
@@ -56,19 +56,20 @@ int main(int argc, char* argv[])
 		std::println(std::cerr, "failed to load volume: {}", e.what());
 		return 1;
 	}
+	std::println("loaded volume ({}x{}x{}@{}bpv)", volume_w, volume_h, volume_d, bits_per_voxel);
 	
 	// Select sampling function
 	std::function<f32(u32, u32, u32)> sample;
 	if (bits_per_voxel == 8)
 	{
-		sample = [&, vu8 = reinterpret_cast<const u8*>(voxels.data())](u32 x, u32 y, u32 z) -> f32
+		sample = [=, vu8 = reinterpret_cast<const u8*>(voxels.get())](u32 x, u32 y, u32 z) -> f32
 		{
 			return vu8[x + volume_w * (y + volume_h * z)];		
 		};
 	}
 	else if (bits_per_voxel == 16)
 	{
-		sample = [&, vu16 = reinterpret_cast<const u16*>(voxels.data())](u32 x, u32 y, u32 z) -> f32
+		sample = [=, vu16 = reinterpret_cast<const u16*>(voxels.get())](u32 x, u32 y, u32 z) -> f32
 		{
 			return vu16[x + volume_w * (y + volume_h * z)];		
 		};
@@ -77,30 +78,47 @@ int main(int argc, char* argv[])
 	// Extract isosurface
 	std::vector<vertex> vertices;
 	std::vector<triangle> triangles;
-	polygonize(isolevel, sample, volume_w, volume_h, volume_d, vertices, triangles);
-	
-	// Open output file
-	fs::path file_path(argv[3]);
-	std::ofstream file(file_path, std::ios::binary);
-	if (!file.is_open())
+	try
 	{
-		std::println(std::cerr, "failed to open output file");
+		polygonize(isolevel, sample, volume_w, volume_h, volume_d, vertices, triangles);
+	}
+	catch (const std::exception& e)
+	{
+		std::println(std::cerr, "failed to extract isosurface: {}", e.what());
 		return 1;
 	}
+	std::println("extracted isosurface ({} triangles, {} vertices)", triangles.size(), vertices.size());
 	
-	// Output isosurface
-	if (file_path.extension() == ".obj")
+	// Save isosurface
+	fs::path file_path(argv[3]);
+	try
 	{
-		write_obj(file, vertices, triangles);
+		std::ofstream file(file_path, std::ios::binary);
+		if (!file.is_open())
+		{
+			throw std::runtime_error("failed to open output file");
+		}
+		
+		// Output isosurface
+		if (file_path.extension() == ".obj")
+		{
+			write_obj(file, vertices, triangles);
+		}
+		else if (file_path.extension() == ".stl")
+		{
+			write_stl(file, vertices, triangles);
+		}
+		else
+		{
+			write_ply(file, vertices, triangles);
+		}
 	}
-	else if (file_path.extension() == ".stl")
+	catch (const std::exception& e)
 	{
-		write_stl(file, vertices, triangles);
+		std::println(std::cerr, "failed to save isosurface: {}", e.what());
+		return 1;
 	}
-	else
-	{
-		write_ply(file, vertices, triangles);
-	}
+	std::println("saved isosurface to {}", file_path.string());
 	
 	return 0;
 }

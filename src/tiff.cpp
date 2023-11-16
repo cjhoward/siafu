@@ -21,11 +21,10 @@
  */
 
 #include "siafu.hpp"
-#include <fstream>
-#include <stdexcept>
-#include <ranges>
 #include <execution>
-#include <print>
+#include <fstream>
+#include <ranges>
+#include <stdexcept>
 
 namespace tiff
 {
@@ -92,7 +91,7 @@ namespace tiff
 	}
 }
 
-std::vector<std::byte> load_volume(const fs::path& path, u32& width, u32& height, u32& depth, u32& bits_per_voxel)
+std::unique_ptr<std::byte[]> load_volume(const fs::path& path, u32& width, u32& height, u32& depth, u32& bits_per_voxel)
 {
 	const auto files = tiff::find_files(path);
 	if (files.empty())
@@ -206,16 +205,16 @@ std::vector<std::byte> load_volume(const fs::path& path, u32& width, u32& height
 		throw std::runtime_error("compressed images not supported");
 	}
 	
-	const auto bytes_per_voxel = bits_per_voxel >> 3;
-	std::size_t slice_size = width * height * bytes_per_voxel;
+	const std::size_t bytes_per_voxel = bits_per_voxel >> 3;
+	const std::size_t slice_size_bytes = width * height * bytes_per_voxel;
 	
 	// Allocate voxels
-	std::vector<std::byte> voxels(slice_size * depth);
+	const std::size_t volume_size_bytes = slice_size_bytes * depth;
+	auto voxels = std::make_unique<std::byte[]>(volume_size_bytes);
 	
 	// Load first Z-slice
-	char* slice_data = reinterpret_cast<char*>(voxels.data());
 	file.seekg(strips_offset, std::ios::beg);
-	file.read(slice_data, slice_size);
+	file.read(reinterpret_cast<char*>(voxels.get()), slice_size_bytes);
 	file.close();
 	
 	// Load remaining Z-slices in parallel
@@ -234,15 +233,15 @@ std::vector<std::byte> load_volume(const fs::path& path, u32& width, u32& height
 			}
 			
 			file.seekg(strips_offset, std::ios::beg);
-			file.read(slice_data + slice_size * i, slice_size);
+			file.read(reinterpret_cast<char*>(voxels.get()) + slice_size_bytes * i, slice_size_bytes);
 		}
 	);
 	
 	if (!native_endian && bytes_per_voxel > 1)
 	{
-		for (std::size_t i = 0; i < voxels.size(); i += bytes_per_voxel)
+		for (std::size_t i = 0; i < volume_size_bytes; i += bytes_per_voxel)
 		{
-			std::reverse(voxels.begin() + i, voxels.begin() + i + bytes_per_voxel);
+			std::reverse(voxels.get() + i, voxels.get() + i + bytes_per_voxel);
 		}
 	}
 	

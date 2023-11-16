@@ -5,32 +5,34 @@ project(siafu LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Define build types and set default to Release
-if(NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE "Release")
-endif()
-
-# Enable all warnings and treat them as errors
-if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-    add_compile_options(-Wall -Wextra -pedantic -Werror)
-elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-    add_compile_options(/MP /MT /GS- /W4 /WX)
-endif()
-
 # Specify the source files in the "src" directory
 file(GLOB_RECURSE SOURCE_FILES CONFIGURE_DEPENDS src/*.cpp)
 
 # Create an executable using the specified source files
 add_executable(${PROJECT_NAME} ${SOURCE_FILES})
 
-# Compiler-specific optimization flags for Release build
+# Set executable compile options
+target_compile_options(${PROJECT_NAME} PRIVATE
+    $<$<CXX_COMPILER_ID:GNU,Clang>:-Wall -Wextra -pedantic -Werror -Wconversion -Wshadow -flto>
+    $<$<CXX_COMPILER_ID:MSVC>:/MP /MT /GS- /W4 /WX /GL>
+)
+
+# Set executable link options
+target_link_options(${PROJECT_NAME} PRIVATE
+    $<$<CXX_COMPILER_ID:GNU,Clang>:-static -flto>
+	$<$<CXX_COMPILER_ID:MSVC>:/LTCG>
+)
+
+# Set release build-specific compile and link options
 if(CMAKE_BUILD_TYPE STREQUAL "Release")
-    if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-        add_compile_options(-O3)
-    elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-        add_compile_options(/Ox /Ob2)
-		target_link_options(${PROJECT_NAME} PRIVATE /NOLOGO /OPT:REF /OPT:ICF /INCREMENTAL:NO)
-    endif()
+	target_compile_options(${PROJECT_NAME} PRIVATE
+		$<$<CXX_COMPILER_ID:GNU,Clang>:-O3 -march=native>
+		$<$<CXX_COMPILER_ID:MSVC>:/Ox /Ob2 /Ot /fp:fast /Z7>
+	)
+	target_link_options(${PROJECT_NAME} PRIVATE
+		$<$<CXX_COMPILER_ID:GNU,Clang>:-s>
+		$<$<CXX_COMPILER_ID:MSVC>:/NOLOGO /OPT:REF /OPT:ICF /INCREMENTAL:NO>
+	)
 endif()
 
 # Place the generated .exe directly in the bin directory
