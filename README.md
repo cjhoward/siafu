@@ -4,7 +4,7 @@
 
 ## Overview
 
-Siafu is a tiny utility program for extracting isosurfaces from volumetric data. The program loads volumes from sequences of uncompressed TIFF files, and outputs models in `.ply`, `.obj`, or `.stl` formats. Siafu is written in C++23 with zero dependencies.
+Siafu is a tiny utility program for extracting isosurfaces from volumetric data. The program loads a 3D volume from a sequence of uncompressed TIFF files, extracts an isosurface using the marching cubes algorithm, and outputs a model in `.ply`, `.obj`, or `.stl` format. Siafu is written in C++23 with zero dependencies.
 
 ## Usage
 
