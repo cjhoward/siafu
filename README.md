@@ -33,16 +33,24 @@ cmake --build build --config Release --target install
 siafu <volume_path> <isolevel> <output_file>
 ```
 
--   `volume_path`: Directory containing a sequence of uncompressed TIFF files.
--   `isolevel`: Threshold value for isosurface extraction.
--   `output_file`: Name of the output file. If the file extension is not recognized, the `.ply` format will be used.
+### Parameters
+
+-   `volume_path`: Path to a sequence of uncompressed TIFF files.
+-   `isolevel`: Floating-point threshold value for isosurface extraction.
+-   `output_file`: Name and format of the output file. Supported file extensions include `.ply`, `.obj`, and `.stl`. If the file extension unrecognized, the `.ply` format will be used.
 
 ### Examples
 
-Load a volume from the `data` directory, extract an isosurface at isolevel `500`, and save the isosurface as `output.obj`:
+Load a volume from the `data/ant` directory, extract an isosurface at isolevel `500`, and save the isosurface as `ant.ply`:
 
 ```bash
-siafu ./data 500 output.obj
+siafu data/ant 500 ant.ply
+```
+
+Load a volume from the `C:\beetle` directory, extract an isosurface at isolevel `123.4`, and save the isosurface as `beetle.obj`:
+
+```bash
+siafu C:\beetle\001.tif 123.4 beetle.obj
 ```
 
 ## Maintainers
@@ -62,4 +70,4 @@ Contributions are welcome! Feel free to [open an issue](https://github.com/cjhow
 
 ## References
 
--   Bourke, P. (1994). Polygonising a scalar field. <https://paulbourke.net/geometry/polygonise/>
+1.  Bourke, P. (1994). Polygonising a scalar field. <https://paulbourke.net/geometry/polygonise/>
