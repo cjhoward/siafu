@@ -3,7 +3,7 @@
 
 #include "siafu.hpp"
 #include <bit>
-#include <print>
+#include <format>
 
 void write_ply(std::ostream& file, std::span<const vertex> vertices, std::span<const triangle> triangles)
 {

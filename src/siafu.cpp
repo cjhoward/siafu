@@ -4,12 +4,12 @@
 #include "siafu.hpp"
 #include <fstream>
 #include <iostream>
-#include <print>
+#include <format>
 #include <stdexcept>
 
 int main(int argc, char* argv[])
 {
-	auto usage = [](){std::println("usage: <volume_path> <isolevel> <output_file>");};
+	auto usage = [](){std::cerr << "usage: <volume_path> <isolevel> <output_file>\n";};
 	
 	if (argc != 4)
 	{
@@ -37,7 +37,7 @@ int main(int argc, char* argv[])
 		std::cerr << std::format("failed to load volume: {}\n", e.what());
 		return 1;
 	}
-	std::println("loaded volume ({}x{}x{}@{}bpv)", volume_w, volume_h, volume_d, bits_per_voxel);
+	std::cout << std::format("loaded volume ({}x{}x{}@{}bpv)\n", volume_w, volume_h, volume_d, bits_per_voxel);
 	
 	// Select sampling function
 	std::function<f32(u32, u32, u32)> sample;
@@ -68,7 +68,7 @@ int main(int argc, char* argv[])
 		std::cerr << std::format("failed to extract isosurface: {}\n", e.what());
 		return 1;
 	}
-	std::println("extracted isosurface ({} triangles, {} vertices)", triangles.size(), vertices.size());
+	std::cout << std::format("extracted isosurface ({} triangles, {} vertices)\n", triangles.size(), vertices.size());
 	
 	// Save isosurface
 	fs::path file_path(argv[3]);
@@ -99,7 +99,7 @@ int main(int argc, char* argv[])
 		std::cerr << std::format("failed to save isosurface: {}\n", e.what());
 		return 1;
 	}
-	std::println("saved isosurface to {}", file_path.string());
+	std::cout << std::format("saved isosurface to {}\n", file_path.string());
 	
 	return 0;
 }

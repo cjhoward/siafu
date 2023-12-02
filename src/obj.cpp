@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 #include "siafu.hpp"
-#include <print>
+#include <format>
 
 void write_obj(std::ostream& file, std::span<const vertex> vertices, std::span<const triangle> triangles)
 {
