@@ -1,24 +1,5 @@
-/*
- * Copyright (c) 2023 C. J. Howard
- * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- * 
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- */
+// SPDX-FileCopyrightText: 2023 C. J. Howard
+// SPDX-License-Identifier: MIT
 
 #include "siafu.hpp"
 #include <fstream>
@@ -53,7 +34,7 @@ int main(int argc, char* argv[])
 	}
 	catch (const std::exception& e)
 	{
-		std::println(std::cerr, "failed to load volume: {}", e.what());
+		std::cerr << std::format("failed to load volume: {}\n", e.what());
 		return 1;
 	}
 	std::println("loaded volume ({}x{}x{}@{}bpv)", volume_w, volume_h, volume_d, bits_per_voxel);
@@ -84,7 +65,7 @@ int main(int argc, char* argv[])
 	}
 	catch (const std::exception& e)
 	{
-		std::println(std::cerr, "failed to extract isosurface: {}", e.what());
+		std::cerr << std::format("failed to extract isosurface: {}\n", e.what());
 		return 1;
 	}
 	std::println("extracted isosurface ({} triangles, {} vertices)", triangles.size(), vertices.size());
@@ -115,7 +96,7 @@ int main(int argc, char* argv[])
 	}
 	catch (const std::exception& e)
 	{
-		std::println(std::cerr, "failed to save isosurface: {}", e.what());
+		std::cerr << std::format("failed to save isosurface: {}\n", e.what());
 		return 1;
 	}
 	std::println("saved isosurface to {}", file_path.string());

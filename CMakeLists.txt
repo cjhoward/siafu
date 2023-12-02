@@ -1,43 +1,59 @@
-cmake_minimum_required(VERSION 3.21)
-project(siafu LANGUAGES CXX)
+# SPDX-FileCopyrightText: 2023 C. J. Howard
+# SPDX-License-Identifier: CC0-1.0
 
-# Set the C++ standard to C++23
-set(CMAKE_CXX_STANDARD 23)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+cmake_minimum_required(VERSION 3.27)
+
+# Init project
+project(Siafu
+	VERSION 1.0.0
+	DESCRIPTION "Isosurface extraction utility"
+	HOMEPAGE_URL "https://github.com/cjhoward/siafu"
+	LANGUAGES CXX
+)
 
 # Specify the source files in the "src" directory
-file(GLOB_RECURSE SOURCE_FILES CONFIGURE_DEPENDS src/*.cpp)
+file(GLOB_RECURSE SOURCE_FILES CONFIGURE_DEPENDS
+	${PROJECT_SOURCE_DIR}/src/*.cpp
+)
 
 # Create an executable using the specified source files
 add_executable(${PROJECT_NAME} ${SOURCE_FILES})
 
+# Set executable properties
+set_target_properties(${PROJECT_NAME}
+	PROPERTIES
+		OUTPUT_NAME $<LOWER_CASE:${PROJECT_NAME}>
+		COMPILE_WARNING_AS_ERROR ON
+		CXX_STANDARD 23
+		CXX_STANDARD_REQUIRED ON
+		CXX_EXTENSIONS OFF
+		MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>"
+)
+
 # Set executable compile options
-target_compile_options(${PROJECT_NAME} PRIVATE
-    $<$<CXX_COMPILER_ID:GNU,Clang>:-Wall -Wextra -pedantic -Werror -Wconversion -Wshadow -flto>
-    $<$<CXX_COMPILER_ID:MSVC>:/MP /MT /GS- /W4 /WX /GL>
+target_compile_options(${PROJECT_NAME}
+	PRIVATE
+		$<$<CXX_COMPILER_ID:MSVC>:
+			/W4 /EHsc /GR-
+			$<$<NOT:$<CONFIG:Debug>>:/GL>
+			$<$<CONFIG:Release>:/O2 /Ob3 /Qfast_transcendentals /GS->
+		>
+		$<$<CXX_COMPILER_ID:GNU,Clang>:-Wall -Wextra -pedantic>
 )
 
 # Set executable link options
 target_link_options(${PROJECT_NAME} PRIVATE
-    $<$<CXX_COMPILER_ID:GNU,Clang>:-static -flto>
-	$<$<CXX_COMPILER_ID:MSVC>:/LTCG>
+	PRIVATE
+		$<$<PLATFORM_ID:Windows>:
+			$<$<CXX_COMPILER_ID:MSVC>:
+				$<$<NOT:$<CONFIG:Debug>>:/OPT:REF /OPT:ICF /INCREMENTAL:NO /LTCG>
+			>
+		>
+		$<$<CXX_COMPILER_ID:GNU,Clang>:
+			-static
+			$<$<NOT:$<CONFIG:Debug>>:-flto>
+		>
 )
 
-# Set release build-specific compile and link options
-if(CMAKE_BUILD_TYPE STREQUAL "Release")
-	target_compile_options(${PROJECT_NAME} PRIVATE
-		$<$<CXX_COMPILER_ID:GNU,Clang>:-O3 -march=native>
-		$<$<CXX_COMPILER_ID:MSVC>:/Ox /Ob2 /Ot /fp:fast /Z7>
-	)
-	target_link_options(${PROJECT_NAME} PRIVATE
-		$<$<CXX_COMPILER_ID:GNU,Clang>:-s>
-		$<$<CXX_COMPILER_ID:MSVC>:/NOLOGO /OPT:REF /OPT:ICF /INCREMENTAL:NO>
-	)
-endif()
-
-# Place the generated .exe directly in the bin directory
-set_target_properties(${PROJECT_NAME} PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
-    RUNTIME_OUTPUT_DIRECTORY_DEBUG "${CMAKE_BINARY_DIR}/bin"
-    RUNTIME_OUTPUT_DIRECTORY_RELEASE "${CMAKE_BINARY_DIR}/bin"
-)
+# Install executable
+install(TARGETS ${PROJECT_NAME})
