@@ -37,7 +37,7 @@ jobs:
     - name: Upload build artifact
       uses: actions/upload-artifact@v3
       with:
-        name: ${{github.event.repository.name}}-${{github.ref_name}}-${{matrix.build_platform}}-${{matrix.build_arch}}
+        name: ${{matrix.build_platform}}-${{matrix.build_arch}}
         path: |
           build/Release
   
@@ -49,8 +49,11 @@ jobs:
     - name: Download build artifacts
       uses: actions/download-artifact@v3
     
+    - name: Zip builds
+      run: zip ${{github.event.repository.name}}-${{github.ref_name}}-windows-x64.zip windows-x64/* -r
+    
     - name: Create release
       uses: softprops/action-gh-release@v1
       with:
         files: |
-          ${{github.event.repository.name}}-${{github.ref_name}}-windows-x64
+          ${{github.event.repository.name}}-${{github.ref_name}}-windows-x64.zip
