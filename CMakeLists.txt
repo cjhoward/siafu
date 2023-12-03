@@ -5,7 +5,7 @@ cmake_minimum_required(VERSION 3.27)
 
 # Init project
 project(Siafu
-	VERSION 1.0.0
+	VERSION 1.1.0
 	DESCRIPTION "Isosurface extraction utility"
 	HOMEPAGE_URL "https://github.com/cjhoward/siafu"
 	LANGUAGES CXX
