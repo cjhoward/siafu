@@ -30,14 +30,18 @@ cmake --build build --config Release --target install
 ## Usage
 
 ```bash
-siafu <volume_path> <isolevel> <output_file>
+usage: siafu [--version] [--help]
+             <volume_path> <isolevel> <output_file>
 ```
 
-### Parameters
-
 -   `volume_path`: Path to a sequence of uncompressed TIFF files.
--   `isolevel`: Floating-point threshold value for isosurface extraction.
--   `output_file`: Name and format of the output file. Supported file extensions include `.ply`, `.obj`, and `.stl`. If the file extension unrecognized, the `.ply` format will be used.
+-   `isolevel`: Threshold value for isosurface extraction.
+-   `output_file`: Output file path and format. Supported file formats include `.ply`, `.obj`, and `.stl`. If the output file extension is unrecognized, the `.ply` format will be used.
+
+### Options
+
+-   `--version`: Display the version number.
+-   `--help`: Display usage information.
 
 ### Examples
 

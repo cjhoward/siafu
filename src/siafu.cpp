@@ -2,26 +2,46 @@
 // SPDX-License-Identifier: MIT
 
 #include "siafu.hpp"
+#include "config.hpp"
 #include <fstream>
 #include <iostream>
 #include <format>
 #include <stdexcept>
+#include <string_view>
 
 int main(int argc, char* argv[])
 {
-	auto usage = [](){std::cerr << "usage: <volume_path> <isolevel> <output_file>\n";};
+	// Parse options
+	if (argc > 1)
+	{
+		std::string_view option(argv[1]);
+		
+		if (option == "--version")
+		{
+			std::cout << siafu_version_string << std::endl;
+			return 0;
+		}
+		else if (option == "--help")
+		{
+			std::cout << siafu_help_string << std::endl;
+			return 0;
+		}
+	}
 	
+	// Incorrect usage
 	if (argc != 4)
 	{
-		usage();
+		std::cerr << siafu_help_string << std::endl;
 		return 1;
 	}
 	
+	// Parse isolevel parameter
 	char* endptr;
 	f32 isolevel = std::strtof(argv[2], &endptr);
 	if (*endptr != '\0')
 	{
-		usage();
+		// NaN
+		std::cerr << siafu_help_string << std::endl;
 		return 1;
 	}
 	

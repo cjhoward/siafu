@@ -18,6 +18,9 @@ file(GLOB_RECURSE SOURCE_FILES CONFIGURE_DEPENDS
 	${PROJECT_SOURCE_DIR}/src/*.cpp
 )
 
+# Generate config header
+configure_file(${PROJECT_SOURCE_DIR}/src/config.hpp.in ${PROJECT_BINARY_DIR}/src/config.hpp)
+
 if(CMAKE_SYSTEM_NAME MATCHES "Windows")
 	
 	# Generate Windows version-information resource file
@@ -38,6 +41,13 @@ set_target_properties(${PROJECT_NAME}
 		CXX_STANDARD_REQUIRED ON
 		CXX_EXTENSIONS OFF
 		MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>"
+)
+
+# Set executable include directories
+target_include_directories(${PROJECT_NAME}
+	PRIVATE
+		${PROJECT_SOURCE_DIR}/src
+		${PROJECT_BINARY_DIR}/src
 )
 
 # Set executable compile options

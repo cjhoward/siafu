@@ -1,0 +1,17 @@
+// SPDX-FileCopyrightText: 2023 C. J. Howard
+// SPDX-License-Identifier: MIT
+
+#ifndef CONFIG_HPP
+#define CONFIG_HPP
+
+#include <string_view>
+
+/// Siafu version string.
+inline constexpr std::string_view siafu_version_string = "siafu v@PROJECT_VERSION@";
+
+/// Siafu help string.
+inline constexpr std::string_view siafu_help_string =
+	"usage: siafu [--version] [--help]\n"
+	"             <volume_path> <isolevel> <output_file>";
+
+#endif // CONFIG_HPP
