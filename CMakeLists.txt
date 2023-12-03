@@ -10,11 +10,21 @@ project(Siafu
 	HOMEPAGE_URL "https://github.com/cjhoward/siafu"
 	LANGUAGES CXX
 )
+string(TOLOWER "${PROJECT_NAME}" PROJECT_SLUG)
+set(PROJECT_AUTHOR "C. J. Howard")
 
 # Specify the source files in the "src" directory
 file(GLOB_RECURSE SOURCE_FILES CONFIGURE_DEPENDS
 	${PROJECT_SOURCE_DIR}/src/*.cpp
 )
+
+if(CMAKE_SYSTEM_NAME MATCHES "Windows")
+	
+	# Generate Windows version-information resource file
+	configure_file(${PROJECT_SOURCE_DIR}/res/windows/version.rc.in ${PROJECT_BINARY_DIR}/res/windows/version.rc)
+	list(APPEND SOURCE_FILES "${PROJECT_BINARY_DIR}/res/windows/version.rc")
+	
+endif()
 
 # Create an executable using the specified source files
 add_executable(${PROJECT_NAME} ${SOURCE_FILES})
