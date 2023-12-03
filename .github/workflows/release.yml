@@ -26,7 +26,7 @@ jobs:
             # build_gen: "Unix Makefiles"
     
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
     
     - name: CMake configure 
       run: cmake -B build -G "${{matrix.build_gen}}" -A "${{matrix.build_arch}}"
@@ -35,7 +35,7 @@ jobs:
       run: cmake --build build --config Release
     
     - name: Upload build artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32 # v3.1.3
       with:
         name: ${{matrix.build_platform}}-${{matrix.build_arch}}
         path: |
@@ -49,13 +49,17 @@ jobs:
     
     steps:
     - name: Download build artifacts
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3.0.2
     
-    - name: Zip builds
-      run: zip ${{github.event.repository.name}}-${{github.ref_name}}-windows-x64.zip windows-x64/* -r
+    - name: Package builds
+      run: |
+        VERSION=${{github.ref_name}}
+        PACKAGE_NAME=${{github.event.repository.name}}-${VERSION_STRING#v}-windows-x64
+        mv windows-x64 ${PACKAGE_NAME}
+        zip -r ${PACKAGE_NAME}.zip ${PACKAGE_NAME}
     
     - name: Create release
-      uses: softprops/action-gh-release@v1
+      uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844 # v0.1.15
       with:
         files: |
-          ${{github.event.repository.name}}-${{github.ref_name}}-windows-x64.zip
+          ${{github.event.repository.name}}-*.zip
