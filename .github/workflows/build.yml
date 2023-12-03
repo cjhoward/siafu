@@ -27,7 +27,7 @@ jobs:
             # build_gen: "Unix Makefiles"
     
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
     
     - name: CMake configure 
       run: cmake -B build -G "${{matrix.build_gen}}" -A "${{matrix.build_arch}}"
