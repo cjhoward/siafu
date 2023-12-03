@@ -14,8 +14,8 @@ Siafu is a tiny utility program for extracting isosurfaces from volumetric data.
 
 -   [Install](#install)
 -   [Usage](#usage)
--   [Maintainers](#maintainers)
 -   [Contributing](#contributing)
+-   [Authors](#authors)
 -   [License](#license)
 -   [References](#references)
 
@@ -57,13 +57,13 @@ Load a volume from the `C:\beetle` directory, extract an isosurface at isolevel 
 siafu C:\beetle\001.tif 123.4 beetle.obj
 ```
 
-## Maintainers
-
--   [C. J. Howard](https://github.com/cjhoward)
-
 ## Contributing
 
 Contributions are welcome! Feel free to [open an issue](https://github.com/cjhoward/siafu/issues) or [submit a pull request](https://github.com/cjhoward/siafu/pulls).
+
+## Authors
+
+-   [C. J. Howard](https://github.com/cjhoward)
 
 ## License
 
