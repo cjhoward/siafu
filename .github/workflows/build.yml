@@ -34,10 +34,3 @@ jobs:
     
     - name: CMake build
       run: cmake --build build --config Release
-    
-    - name: Upload build
-      uses: actions/upload-artifact@v3
-      with:
-        name: ${{matrix.build_platform}}-${{matrix.build_arch}}-release
-        path: |
-          build/Release
