@@ -54,7 +54,7 @@ jobs:
     - name: Package builds
       run: |
         VERSION=${{github.ref_name}}
-        PACKAGE_NAME=${{github.event.repository.name}}-${VERSION_STRING#v}-windows-x64
+        PACKAGE_NAME=${{github.event.repository.name}}-${VERSION#v}-windows-x64
         mv windows-x64 ${PACKAGE_NAME}
         zip -r ${PACKAGE_NAME}.zip ${PACKAGE_NAME}
     
