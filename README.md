@@ -8,7 +8,7 @@ SPDX-License-Identifier: CC0-1.0
 [![build](https://github.com/cjhoward/siafu/actions/workflows/build.yml/badge.svg)](https://github.com/cjhoward/siafu/actions/workflows/build.yml)
 [![code quality](https://app.codacy.com/project/badge/Grade/23dc62d0303f4d20a8f15ec8d6a1eea2)](https://app.codacy.com/gh/cjhoward/siafu/dashboard)
 
-Siafu is a tiny utility program for extracting isosurfaces from volumetric data. The program loads a 3D volume from a sequence of uncompressed TIFF files, extracts an isosurface using the marching cubes algorithm, and outputs a model in `.ply`, `.obj`, or `.stl` format. Siafu is written in C++23 with zero dependencies.
+Siafu is a tiny utility program for extracting isosurfaces from volumetric data. The program loads a 3D volume from a sequence of uncompressed TIFF files, extracts an isosurface using the marching cubes algorithm[^1], and outputs a model in `.ply`, `.obj`, or `.stl` format. Siafu is written in C++23 with zero dependencies.
 
 ## Table of Contents
 
@@ -17,7 +17,6 @@ Siafu is a tiny utility program for extracting isosurfaces from volumetric data.
 -   [Contributing](#contributing)
 -   [Authors](#authors)
 -   [License](#license)
--   [References](#references)
 
 ## Install
 
@@ -72,6 +71,4 @@ Contributions are welcome! Feel free to [open an issue](https://github.com/cjhow
 -   Siafu source code is licensed under [MIT](./LICENSES/MIT.txt).
 -   Siafu documentation is licensed under [CC0-1.0](./LICENSES/CC0-1.0.txt).
 
-## References
-
-1.  Bourke, P. (1994). Polygonising a scalar field. <https://paulbourke.net/geometry/polygonise/>
+[^1]: Bourke, P. (1994). Polygonising a scalar field. <https://paulbourke.net/geometry/polygonise/>
